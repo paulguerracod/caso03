@@ -35,15 +35,11 @@ if (!carpetaNombre) {
     
 }
 
-// Función para generar un número aleatorio de 3 dígitos
+// Mejorar generación de nombres:
 function generarCadenaAleatoria() {
-    const caracteres = 'abcdefghijklmnopqrstuvwxyz0123456789';
-    let cadenaAleatoria = '';
-    for (let i = 0; i < 3; i++) {
-        const caracterAleatorio = caracteres.charAt(Math.floor(Math.random() * caracteres.length));
-        cadenaAleatoria += caracterAleatorio;
-    }
-    return cadenaAleatoria;
+    return Array.from(crypto.getRandomValues(new Uint8Array(8)))
+        .map(b => b.toString(16).padStart(2, '0'))
+        .join(''); // Ej: "a3f8d1c4b9"
 }
 
 

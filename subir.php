@@ -16,11 +16,13 @@ if (!file_exists($carpetaRuta)) {
 if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     $archivo = $_FILES['archivo'];
 
-    if (move_uploaded_file($archivo['tmp_name'], $carpetaRuta . '/' . $archivo['name'])) {
-        echo "Archivo subido con éxito.";
-    } else {
-        echo "Error al subir el archivo.";
-    }
+    // Validar extensiones permitidas:
+$permitidos = ['pdf', 'docx', 'png', 'jpg', 'jpeg'];
+$extension = strtolower(pathinfo($_FILES['archivo']['name'], PATHINFO_EXTENSION));
+
+if (!in_array($extension, $permitidos)) {
+    die("Error: Tipo de archivo no permitido.");
+}
 }
 ?>
 

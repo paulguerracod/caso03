@@ -23,20 +23,16 @@ try {
         }
     }
 
-    if (isset($_POST['eliminarArchivo'])) {
-        $archivoAEliminar = $_POST['eliminarArchivo'];
-        $archivoRutaAEliminar = $carpetaRuta . '/' . $archivoAEliminar;
-
-        if (file_exists($archivoRutaAEliminar)) {
-            if (unlink($archivoRutaAEliminar)) {
-                $mensaje = "Archivo '$archivoAEliminar' eliminado con éxito.";
-            } else {
-                throw new Exception("Error al eliminar el archivo.");
-            }
-        } else {
-            throw new Exception("El archivo '$archivoAEliminar' no existe.");
-        }
+    // Modificar el bloque de eliminación:
+if (isset($_POST['eliminarArchivo'])) {
+    $archivoAEliminar = basename($_POST['eliminarArchivo']); // Solo nombre, sin rutas
+    $archivoRutaAEliminar = $carpetaRuta . '/' . $archivoAEliminar;
+    
+    // Verificar que el archivo exista y esté dentro de la carpeta permitida
+    if (file_exists($archivoRutaAEliminar) && strpos(realpath($archivoRutaAEliminar), realpath("./descarga/")) === 0) {
+        unlink($archivoRutaAEliminar);
     }
+}
 } catch (Exception $e) {
     $mensaje = "Error: " . htmlspecialchars($e->getMessage());
 }

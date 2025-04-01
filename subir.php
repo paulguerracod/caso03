@@ -1,8 +1,6 @@
 <?php
-// Nombre de la carpeta a crear (obtenido del parámetro)
-$carpetaNombre = $_GET['nombre'];
-
-// Ruta donde deseas crear la carpeta (por ejemplo, en la carpeta 'descarga')
+// Sanitizar el nombre de la carpeta:
+$carpetaNombre = preg_replace('/[^a-zA-Z0-9]/', '', $_GET['nombre']); // Solo alfanuméricos
 $carpetaRuta = "./descarga/" . $carpetaNombre;
 
 // Verifica si la carpeta ya existe antes de crearla

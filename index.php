@@ -178,8 +178,8 @@ if (isset($_POST['eliminarArchivo'])) {
         <div class="container">
             <div class="drop-zone" id="dropZone">
             <i class="fas fa-cloud-upload-alt fa-3x" style="color: #4a90e2; margin-bottom: 1rem;"></i>
-            <form action="" method="POST" enctype="multipart/form-data">
-            <input type="hidden" name="csrf_token" value="<?php echo $_SESSION['csrf_token']; ?>">
+            <form id="uploadForm" method="POST" enctype="multipart/form-data">
+                <input type="hidden" name="csrf_token" value="<?= $_SESSION['csrf_token'] ?>">
                     <svg xmlns="http://www.w3.org/2000/svg" width="64" height="64" viewBox="0 0 24 24" style="fill:#0730c5;transform: ;msFilter:;"><path d="M13 19v-4h3l-4-5-4 5h3v4z"></path><path d="M7 19h2v-2H7c-1.654 0-3-1.346-3-3 0-1.404 1.199-2.756 2.673-3.015l.581-.102.192-.558C8.149 8.274 9.895 7 12 7c2.757 0 5 2.243 5 5v1h1c1.103 0 2 .897 2 2s-.897 2-2 2h-3v2h3c2.206 0 4-1.794 4-4a4.01 4.01 0 0 0-3.056-3.888C18.507 7.67 15.56 5 12 5 9.244 5 6.85 6.611 5.757 9.15 3.609 9.792 2 11.82 2 14c0 2.757 2.243 5 5 5z"></path></svg> <br>
                     <input type="file" class="file-input" name="archivo" id="archivo" onchange="document.getElementById('form').submit()">
                     <label> Arrastra tus archivos aquí<br>o</label>
@@ -288,12 +288,14 @@ function uploadFile(file) {
     };
     
     xhr.onload = () => {
-        progressContainer.style.display = 'none';
-        if(xhr.status === 200) {
-            // Actualizar lista de archivos del servidor
-            fetchUploadedFiles();
+    progressContainer.style.display = 'none';
+    if(xhr.status === 200) {
+        const response = JSON.parse(xhr.responseText); // Agregar
+        if(response.success) {
+            addFileToList(response.file); // Nueva función
         }
-    };
+    }
+};
     
     xhr.open('POST', 'subir.php');
     xhr.send(formData);
@@ -323,6 +325,17 @@ function fetchUploadedFiles() {
                 // Crear elementos igual que en previewFile
             });
         });
+}
+
+// Nueva función para actualización inmediata
+function addFileToList(fileData) {
+    createFileItem(fileData.nombre_original, fileData.size, fileData.tipo);
+    fetchUploadedFiles(); // Actualización completa
+}
+
+// Llamar después de subida exitosa
+if(response.success) {
+    addFileToList(response.file);
 }
 
 // Inicializar

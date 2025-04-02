@@ -198,52 +198,12 @@ if (isset($_POST['eliminarArchivo'])) {
             <div id="fileItems"></div>
         </div>
     </div>    
-                </form>
-            </div>
+</form>
+</div>
+</div>
+</div>
 
-            <div class="container2">
-               
-
-                <div id="file-list" class="pila">
-                    <?php
-                    $targetDir = $carpetaRuta;
-
-                    $files = scandir($targetDir);
-                    $files = array_diff($files, array('.', '..'));
-
-                    if (count($files) > 0) {
-                        echo "<h3 style='margin-bottom:10px;'>Archivos Subidos:</h3>";
-                    
-                        foreach ($files as $file) {
-                            echo "<div class='archivos_subidos'>
-                                    <div><a href='$carpetaRuta/$file' download class='boton-descargar'>$file</a></div>
-                                    <div>
-                                        <form action='' method='POST' style='display:inline;'>
-                                            <input type='hidden' name='csrf_token' value='" . $_SESSION['csrf_token'] . "'>
-                                            <input type='hidden' name='eliminarArchivo' value='$file'>
-                                            <button type='submit' class='btn_delete'>
-                                                <svg xmlns='http://www.w3.org/2000/svg' class='icon icon-tabler icon-tabler-trash' width='24' height='24' viewBox='0 0 24 24' stroke-width='2' stroke='currentColor' fill='none' stroke-linecap='round' stroke-linejoin='round'>
-                                                    <path stroke='none' d='M0 0h24v24H0z' fill='none'/>
-                                                    <path d='M4 7l16 0' />
-                                                    <path d='M10 11l0 6' />
-                                                    <path d='M14 11l0 6' />
-                                                    <path d='M5 7l1 12a2 2 0 0 0 2 2h8a2 2 0 0 0 2 -2l1 -12' />
-                                                    <path d='M9 7v-3a1 1 0 0 1 1 -1h4a1 1 0 0 1 1 1v3' />
-                                                </svg>
-                                            </button>
-                                        </form>
-                                    </div>
-                                  </div>";
-                        }
-                    } else {
-                        echo "No se han subido archivos.";
-                    }
-                    ?>
-                </div>
-            </div>
-        </div>
-    </div>
-    <script>
+<script>
 // Configuración inicial
 const fileInput = document.getElementById('fileInput');
 const dropZone = document.getElementById('dropZone');
@@ -251,8 +211,125 @@ const progressBar = document.getElementById('progressBar');
 const progressContainer = document.querySelector('.progress-container');
 const fileItems = document.getElementById('fileItems');
 
+// Iconos por tipo de archivo
+const fileIcons = {
+    pdf: 'far fa-file-pdf',
+    doc: 'far fa-file-word',
+    docx: 'far fa-file-word',
+    ppt: 'far fa-file-powerpoint',
+    pptx: 'far fa-file-powerpoint',
+    xls: 'far fa-file-excel',
+    xlsx: 'far fa-file-excel',
+    txt: 'far fa-file-alt',
+    default: 'far fa-file'
+};
 
-    <!-- <script src="parametro.js"></script> -->
+// Eventos Drag & Drop
+dropZone.addEventListener('click', () => fileInput.click());
+dropZone.addEventListener('dragover', (e) => {
+    e.preventDefault();
+    dropZone.classList.add('dragover');
+});
+
+dropZone.addEventListener('dragleave', () => {
+    dropZone.classList.remove('dragover');
+});
+
+dropZone.addEventListener('drop', (e) => {
+    e.preventDefault();
+    dropZone.classList.remove('dragover');
+    handleFiles(e.dataTransfer.files);
+});
+
+// Manejo de archivos
+function handleFiles(files) {
+    Array.from(files).forEach(file => {
+        if(file.size > 100 * 1024 * 1024) { // Límite de 100MB
+            alert('Archivo demasiado grande. Máximo permitido: 100MB');
+            return;
+        }
+        
+        uploadFile(file);
+        previewFile(file);
+    });
+}
+
+// Vista previa del archivo
+function previewFile(file) {
+    const ext = file.name.split('.').pop().toLowerCase();
+    const icon = fileIcons[ext] || fileIcons.default;
+    
+    const fileItem = document.createElement('div');
+    fileItem.className = 'file-item';
+    fileItem.innerHTML = `
+        <i class="${icon} file-icon"></i>
+        <div class="file-info">
+            <div class="file-name">${file.name}</div>
+            <div class="file-size">${formatFileSize(file.size)}</div>
+        </div>
+    `;
+    
+    fileItems.prepend(fileItem);
+}
+
+// Subida de archivos con progreso
+function uploadFile(file) {
+    const formData = new FormData();
+    formData.append('archivo', file);
+    
+    const xhr = new XMLHttpRequest();
+    
+    xhr.upload.onprogress = (e) => {
+        if(e.lengthComputable) {
+            const percent = (e.loaded / e.total) * 100;
+            progressBar.style.width = `${percent}%`;
+            progressContainer.style.display = 'block';
+        }
+    };
+    
+    xhr.onload = () => {
+        progressContainer.style.display = 'none';
+        if(xhr.status === 200) {
+            // Actualizar lista de archivos del servidor
+            fetchUploadedFiles();
+        }
+    };
+    
+    xhr.open('POST', 'subir.php');
+    xhr.send(formData);
+}
+
+// Formatear tamaño de archivo
+function formatFileSize(bytes) {
+    const units = ['B', 'KB', 'MB', 'GB'];
+    let size = bytes;
+    let unitIndex = 0;
+    
+    while(size >= 1024 && unitIndex < units.length - 1) {
+        size /= 1024;
+        unitIndex++;
+    }
+    
+    return `${size.toFixed(1)} ${units[unitIndex]}`;
+}
+
+// Obtener archivos subidos del servidor
+function fetchUploadedFiles() {
+    fetch('get_files.php')
+        .then(response => response.json())
+        .then(files => {
+            fileItems.innerHTML = '';
+            files.forEach(file => {
+                // Crear elementos igual que en previewFile
+            });
+        });
+}
+
+// Inicializar
+fetchUploadedFiles();
+</script>
+
+<script src="parametro.js"></script>
 
 </body>
 

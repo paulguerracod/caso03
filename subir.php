@@ -68,10 +68,12 @@ try {
     // ==================== RESPUESTA EXITOSA ====================
     echo json_encode([
         'success' => true,
-        'filename' => $nombreArchivo,
-        'original' => $originalName,
-        'size' => formatBytes($file['size']),
-        'icon' => getFileIcon($extension)
+        'file' => [
+            'nombre' => $nombreArchivo,
+            'tipo' => $extension,
+            'size' => filesize($carpetaRuta . '/' . $nombreArchivo),
+            'nombre_original' => $_FILES['archivo']['name'] // Agregar
+        ]
     ]);
 
 } catch (Exception $e) {

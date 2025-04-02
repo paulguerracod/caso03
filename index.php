@@ -6,7 +6,7 @@ if (empty($_SESSION['csrf_token'])) {
     $_SESSION['csrf_token'] = bin2hex(random_bytes(32));
 }
 $carpetaNombre = isset($_GET['nombre']) ? $_GET['nombre'] : '';
-$carpetaRuta = "./descarga/" . $carpetaNombre;
+$carpetaRuta = "../private/descarga/" . $carpetaNombre;
 
 try {
     if (!file_exists($carpetaRuta)) {

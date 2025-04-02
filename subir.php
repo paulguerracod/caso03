@@ -7,7 +7,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     }
 // Sanitizar el nombre de la carpeta:
 $carpetaNombre = preg_replace('/[^a-zA-Z0-9]/', '', $_GET['nombre']); // Solo alfanuméricos
-$carpetaRuta = "./descarga/" . $carpetaNombre;
+$carpetaRuta = "../private/descarga/" . $carpetaNombre; // Fuera del web root
 
 // Verifica si la carpeta ya existe antes de crearla
 if (!file_exists($carpetaRuta)) {

@@ -85,6 +85,13 @@ try {
                                onchange="document.getElementById('form').submit()">
                         <label> Click para seleccionar archivos<br>o</label>
                         <p><b>Abre el explorador</b></p>
+                         <!-- Barra de progreso -->
+                          <div class="upload-status">
+                            <div class="progress-container">
+                                <div class="progress-bar" id="progressBar"></div>
+                            </div>
+                            <div class="status-message" id="statusMessage"></div>
+                        </div>
                     </form>
                 </div>
 

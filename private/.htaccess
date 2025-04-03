@@ -1,0 +1,3 @@
+# Bloquear acceso a todo el contenido
+Order Deny,Allow
+Deny from All

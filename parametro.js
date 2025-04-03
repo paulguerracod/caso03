@@ -1,125 +1,114 @@
+// parametro.js - Modificaciones necesarias
 
-// Obtén la URL actual
-const urlActual = window.location.href;
+// 1. Definir los iconos fuera de las funciones (en el ámbito global)
+const fileIcons = {
+    pdf: 'fa-ns far fa-file-pdf',       // Agregar 'fa-ns'
+    doc: 'fa-ns far fa-file-word',
+    docx: 'fa-ns far fa-file-word',
+    ppt: 'fa-ns far fa-file-powerpoint',
+    pptx: 'fa-ns far fa-file-powerpoint',
+    xls: 'fa-ns far fa-file-excel',
+    xlsx: 'fa-ns far fa-file-excel',
+    txt: 'fa-ns far fa-file-alt',
+    default: 'fa-ns far fa-file'       // Namespace en todos
+};
 
-// Verifica si el parámetro 'nombre' ya está presente en la URL
-var parametros = new URLSearchParams(window.location.search);
-var carpetaNombre = parametros.get("nombre");
-
-if (!carpetaNombre) {
-    // Si 'nombre' no está presente, genera un número aleatorio
-    carpetaNombre = generarCadenaAleatoria();
-    // Agrega el parámetro 'nombre' a la URL
-    const urlConParametro = urlActual.includes("?") ? `${urlActual}&nombre=${carpetaNombre}` : `${urlActual}?nombre=${carpetaNombre}`;
-    // Redirige a la nueva URL con el parámetro 'nombre'
-    window.location.href = urlConParametro;
-} else {
-    // Extrae el valor del parámetro de la URL
-    const parametros = new URLSearchParams(window.location.search);
-    const carpetaNombre = parametros.get("nombre");
-
-    // Llama a la función para crear la carpeta con el nombre obtenido
-    function crearCarpeta(carpetaNombre) {
-    $.ajax({
-        url: 'crearCarpeta.php', // Ruta del archivo PHP que crea la carpeta
-        type: 'POST', // Puedes usar POST o GET según tus necesidades
-        data: { nombreCarpeta: carpetaNombre }, // Envía el nombre de la carpeta como datos
-        success: function(response) {
-            console.log('Carpeta creada.'); // Mensaje de éxito (puedes personalizarlo)
-        },
-        error: function() {
-            console.log('Error al crear la carpeta.'); // Mensaje de error (puedes personalizarlo)
-        }
-    });
-}
+// 2. Función para formatear el tamaño del archivo (debe existir)
+function formatFileSize(bytes) {
+    const units = ['B', 'KB', 'MB', 'GB'];
+    let size = bytes;
+    let unitIndex = 0;
     
-}
-
-// Mejorar generación de nombres:
-function generarCadenaAleatoria() {
-    return Array.from(crypto.getRandomValues(new Uint8Array(8)))
-        .map(b => b.toString(16).padStart(2, '0'))
-        .join(''); // Ej: "a3f8d1c4b9"
-}
-
-
-// //BARRA DE PROGRESO 
-// function uploadFile(carpetaRuta, inputId) {
-//   var archivoInput = document.getElementById(inputId);
-//   var archivo = archivoInput.files[0];
-//   var progressBar = document.getElementById('progressBar');
-
-//   var formData = new FormData();
-//   formData.append('archivo', archivo);
-
-//   var xhr = new XMLHttpRequest();
-
-//   xhr.upload.onprogress = function (event) {
-//       if (event.lengthComputable) {
-//           var percentComplete = (event.loaded / event.total) * 100;
-//           progressBar.value = percentComplete;
-//       }
-//   };
-
-//   xhr.onload = function () {
-//       if (xhr.status === 200) {
-//           console.log('Archivo subido con éxito');
-//           // Puedes realizar acciones adicionales después de la carga aquí
-//       } else {
-//           console.error('Error al subir el archivo');
-//       }
-//   };
-
-//   xhr.open('POST', 'upload.php', true);
-//   xhr.send(formData);
-// }
-
-
-//DROP AREA
-
-// Obtén la zona de arrastre y el formulario
-const dropArea = document.getElementById('drop-area');
-const Form = document.getElementById('form');
-
-// Agrega los siguientes eventos a la zona de arrastre
-dropArea.addEventListener('dragover', (e) => {
-    e.preventDefault();
-    dropArea.classList.add('drag-over');
-});
-
-dropArea.addEventListener('dragleave', () => {
-    dropArea.classList.remove('drag-over');
-});
-
-dropArea.addEventListener('drop', (e) => {
-    e.preventDefault();
-    dropArea.classList.remove('drag-over');
-    const file = e.dataTransfer.files[0];
-    handleFile(file);
-});
-
-// Función para manejar el archivo seleccionado
-function handleFile(file) {
-    if (file) {
-        // Realiza alguna acción, como mostrar el nombre del archivo
-        console.log('Archivo seleccionado:', file.name);
-
-        // También puedes realizar otras acciones, como subir el archivo al servidor
-        // Puedes agregar aquí el código para subir el archivo si lo deseas
+    while(size >= 1024 && unitIndex < units.length - 1) {
+        size /= 1024;
+        unitIndex++;
     }
+    
+    return `${size.toFixed(1)} ${units[unitIndex]}`;
 }
 
-// Agrega esta función para manejar el evento de envío del formulario
-Form.addEventListener('submit', (e) => {
-    e.preventDefault();
-    const fileInput = Form.querySelector('#archivo');
-    const file = fileInput.files[0];
-    if (file) {
-        // Puedes enviar el archivo al servidor para su procesamiento aquí
-        console.log('Subir archivo:', file.name);
-    } else {
-        alert('Por favor, seleccione un archivo primero.');
-    }
-});
+// 3. Reemplazar la función fetchUploadedFiles existente
+function fetchUploadedFiles() {
+    // Obtener el nombre de la carpeta desde el HTML
+    const urlParams = new URLSearchParams(window.location.search);
+    const carpetaNombre = urlParams.get('nombre');
+    
+    fetch(`get_files.php?nombre=${encodeURIComponent(carpetaNombre)}`)
+        .then(response => {
+            if(!response.ok) throw new Error('Error en la red');
+            return response.json();
+        })
+        .then(data => {
+            if(data.success) {
+                fileItems.innerHTML = '';
+                data.data.forEach(file => {
+                    createFileItem(file.nombre_original, file.size, file.tipo);
+                });
+            }
+        })
+        .catch(error => {
+            console.error('Error:', error);
+        });
+}
 
-//progres bar 
+// 4. Añadir la nueva función createFileItem
+function createFileItem(name, size, type) {
+    const ext = type.toLowerCase();
+    const icon = fileIcons[ext] || fileIcons.default;
+    
+    const fileItem = document.createElement('div');
+    fileItem.className = 'file-item';
+    fileItem.innerHTML = `
+        <i class="${icon} file-icon"></i>
+        <div class="file-info">
+            <div class="file-name">${name}</div>
+            <div class="file-size">${formatFileSize(size)}</div>
+        </div>
+    `;
+    
+    fileItems.prepend(fileItem);
+}
+
+// 5. Modificar la función uploadFile para actualizar la lista después de subir
+function uploadFile(file) {
+    const formData = new FormData();
+    formData.append('archivo', file);
+    
+    const xhr = new XMLHttpRequest();
+    
+    xhr.upload.onprogress = (e) => {
+        if(e.lengthComputable) {
+            const percent = (e.loaded / e.total) * 100;
+            progressBar.style.width = `${percent}%`;
+            progressContainer.style.display = 'block';
+        }
+    };
+    
+    xhr.onload = () => {
+        progressContainer.style.display = 'none';
+        if(xhr.status === 200) {
+            try {
+                const response = JSON.parse(xhr.responseText);
+                if(response.success) {
+                    createFileItem(response.file.nombre_original, response.file.size, response.file.tipo);
+                }
+            } catch(e) {
+                console.error('Error parsing response:', e);
+            }
+        }
+    };
+    
+    xhr.open('POST', 'subir.php');
+    xhr.send(formData);
+}
+
+// 6. Inicialización al cargar la página
+document.addEventListener('DOMContentLoaded', function() {
+    // Obtener referencias a los elementos del DOM
+    const fileItems = document.getElementById('fileItems');
+    const progressBar = document.getElementById('progressBar');
+    const progressContainer = document.querySelector('.progress-container');
+    
+    // Cargar archivos existentes
+    fetchUploadedFiles();
+});

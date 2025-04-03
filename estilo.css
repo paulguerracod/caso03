@@ -3,17 +3,16 @@
 * {
   margin: 0;
   padding: 0;
-  font-family: Georgia, 'Times New Roman', Times, serif;
+  font-family: "Inter", sans-serif;
   box-sizing: border-box;
 }
 
 body {
-  background-color: rgb(51, 60, 77);
-  background: url(https://thumbs.dreamstime.com/b/vector-modern-upload-download-design-icon-set-button-91532881.jpg);
+  background-color: rgb(255, 255, 255);
   font-family: fantasy;
   font-size: 14px;
   font-weight: 800;
-  color: #ffffff;
+  color: #131212;
   text-align: center;
   display: flex;
   align-items: center;
@@ -24,15 +23,14 @@ body {
 
 .content {
   text-align: center;
-  background-color: #566573;
+  background-color: #f9fafc;
   padding: 20px;
-  width: 100%;
-  max-width: 1200px; 
+  width: 80%;
+  max-width: 900px; 
   margin: 0 auto;
   border-radius: 10px;
   box-shadow: 0 0 20px rgba(0,0,0,0.3);
 }
-
 
 h1 {
   font-size: 2rem;
@@ -141,11 +139,11 @@ form p {
 }
 
 /* Iconos específicos */
-.fa-file-pdf { color: #e74c3c; }
-.fa-file-word { color: #2e86c1; }
-.fa-file-excel { color: #28b463; }
-.fa-file-powerpoint { color: #eb984e; }
-.fa-file-alt { color: #7d3c98; }
+.fa-file-pdf { color: #f80000; }
+.fa-file-word { color: #0004ffee; }
+.fa-file-excel { color: #027e2b; }
+.fa-file-powerpoint { color: #ff5100; }
+.fa-file-alt { color: #57057a; }
 .btn_delete {
   border: none;
   padding: 0;
@@ -186,8 +184,8 @@ button.btn_delete svg {
 .archivos_subidos {
   display: flex;
   justify-content: space-between;
-  background: #c0392b ;
-  padding: 12px;
+  background: #161616 ;
+  padding: 9px;
   border-radius: 15px;
   margin-bottom: 8px;
   align-items: center;
@@ -211,6 +209,14 @@ button.btn_delete svg {
 .archivos_subidos div {
   overflow: hidden;
  
+}
+
+.beta {
+  background: #23da95;
+  font-size: 1.2rem;
+  border-radius: 6px;
+  display: inline-block;
+  padding: 0 12px;
 }
 
 /* Estilos para la barra de progreso */

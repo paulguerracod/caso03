@@ -63,13 +63,14 @@ try {
 </head>
 
 <body>
+    <h1>Compartir Archivos
+        <sup class="beta">BETA</sup>
+        </h1>
     <div class="content">
-        <h1>Compartir Archivos</h1>
-        <div class="container">
-            <h3>Sube tus archivos y comparte este enlace temporal: 
+    <h3>Sube tus archivos y comparte este enlace temporal: 
                 <span>tuip/<?php echo htmlspecialchars($carpetaNombre); ?></span>
             </h3>
-            
+        <div class="container">
             <!-- Contenedor principal flex -->
             <div class="main-grid">
                 <!-- Sección de subida -->

@@ -1,5 +1,21 @@
 <?php
-$carpetaNombre = isset($_GET['nombre']) ? $_GET['nombre'] : '';
+// Generar código aleatorio de 3 caracteres si no existe
+if (!isset($_GET['nombre']) || empty($_GET['nombre'])) {
+    $caracteres = 'abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789';
+    $carpetaNombre = substr(str_shuffle($caracteres), 0, 3);
+    header('Location: index.php?nombre=' . $carpetaNombre);
+    exit;
+}
+
+// Validar formato del código
+$carpetaNombre = $_GET['nombre'];
+if (!preg_match('/^[a-zA-Z0-9]{3}$/', $carpetaNombre)) {
+    $caracteres = 'abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789';
+    $carpetaNombre = substr(str_shuffle($caracteres), 0, 3);
+    header('Location: index.php?nombre=' . $carpetaNombre);
+    exit;
+}
+
 $carpetaRuta = "./private/descarga/" . $carpetaNombre;
 
 try {
@@ -68,7 +84,7 @@ try {
         </h1>
     <div class="content">
     <h3>Sube tus archivos y comparte este enlace temporal: 
-                <span>tuip/<?php echo htmlspecialchars($carpetaNombre); ?></span>
+        <span id="enlaceTemporal">ibu.pe/<?php echo htmlspecialchars($carpetaNombre); ?></span>
             </h3>
         <div class="container">
             <!-- Contenedor principal flex -->

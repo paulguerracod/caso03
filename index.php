@@ -1,22 +1,22 @@
 <?php
-// Generar código aleatorio de 3 caracteres si no existe
-if (!isset($_GET['nombre']) || empty($_GET['nombre'])) {
-    $caracteres = 'abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789';
-    $carpetaNombre = substr(str_shuffle($caracteres), 0, 3);
-    header('Location: index.php?nombre=' . $carpetaNombre);
-    exit;
+// Generar código único de 3 caracteres (ej: gfr, a3b)
+function generarCodigo() {
+    $caracteres = 'abcdefghijklmnopqrstuvwxyz0123456789';
+    return substr(str_shuffle($caracteres), 0, 3);
 }
 
-// Validar formato del código
-$carpetaNombre = $_GET['nombre'];
-if (!preg_match('/^[a-zA-Z0-9]{3}$/', $carpetaNombre)) {
-    $caracteres = 'abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789';
-    $carpetaNombre = substr(str_shuffle($caracteres), 0, 3);
-    header('Location: index.php?nombre=' . $carpetaNombre);
-    exit;
-}
+$codigo = isset($_GET['codigo']) && preg_match('/^[a-z0-9]{3}$/', $_GET['codigo']) 
+    ? $_GET['codigo'] 
+    : generarCodigo();
 
+$carpetaNombre = $codigo;
 $carpetaRuta = "./private/descarga/" . $carpetaNombre;
+
+// Redirigir si no existe el código en la URL
+if(!isset($_GET['codigo'])) {
+    header("Location: ?codigo=$codigo");
+    exit;
+}
 
 try {
     if (!file_exists($carpetaRuta)) {
@@ -84,7 +84,7 @@ try {
         </h1>
     <div class="content">
     <h3>Sube tus archivos y comparte este enlace temporal: 
-        <span id="enlaceTemporal">ibu.pe/<?php echo htmlspecialchars($carpetaNombre); ?></span>
+        <span id="enlaceTemporal">ibu.pe/<?php echo htmlspecialchars($codigo); ?></span>
             </h3>
         <div class="container">
             <!-- Contenedor principal flex -->

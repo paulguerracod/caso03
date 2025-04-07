@@ -8,7 +8,7 @@
 }
 
 body {
-  background-color: rgb(255, 255, 255);
+  background-color: rgb(0, 102, 219);
   font-family: fantasy;
   font-size: 14px;
   font-weight: 800;
@@ -23,7 +23,7 @@ body {
 
 .content {
   text-align: center;
-  background-color: #f9fafc;
+  background-color: #f9fcfa;
   padding: 20px;
   width: 80%;
   max-width: 900px; 
@@ -44,7 +44,7 @@ h1 {
 }
 
 .container {
-  width: 100%;
+  width: 95%;
   background-color: transparent;
   display: flex;
   flex-direction: row;

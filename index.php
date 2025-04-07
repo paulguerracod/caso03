@@ -79,13 +79,13 @@ try {
 </head>
 
 <body>
-    <h1>Compartir Archivos
+    <br><h1>Compartir Archivos
         <sup class="beta">BETA</sup>
-        </h1>
+        </h1></br>
     <div class="content">
-    <h3>Sube tus archivos y comparte este enlace temporal: 
+    <br><h3>Sube tus archivos y comparte este enlace temporal: 
         <span id="enlaceTemporal">ibu.pe/<?php echo htmlspecialchars($codigo); ?></span>
-            </h3>
+            </h3></br>
         <div class="container">
             <!-- Contenedor principal flex -->
             <div class="main-grid">
@@ -167,7 +167,7 @@ try {
                                 HTML;
                             }
                         } else {
-                            echo "<h3 style='margin-bottom:10px;'>No hay archivos subidos:</h3>";
+                            echo "<br><h3 style='margin-bottom:10px;'>No hay archivos subidos:</h3></br>";
                         }
                         ?>
                     </div>

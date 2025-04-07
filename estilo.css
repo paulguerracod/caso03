@@ -8,7 +8,7 @@
 }
 
 body {
-  background-color: rgb(230, 230, 230);
+  background-color: rgba(189, 174, 174, 0.904);
   font-family: fantasy;
   font-size: 14px;
   font-weight: 800;
@@ -24,17 +24,19 @@ body {
 .content {
   text-align: center;
   border-style: solid;
+  border-width: 10px;
+  border-color: blue;
   background-color: #08f156;
   padding: 20px;
   width: 80%;
   max-width: 900px; 
   margin: 0 auto;
-  border-radius: 10px;
+  border-radius: 15px;
   box-shadow: 0 0 20px rgba(0,0,0,0.3);
 }
 
 h1 {
-  font-size: 2rem;
+  font-size: 2.5rem;
 }
 
 /* Mejoras visuales adicionales */
@@ -181,14 +183,14 @@ form p {
 }
 
 button.btn_delete svg {
-  stroke: #ffffff;
+  stroke: red;
 }
 
 .archivos_subidos {
   display: flex;
   font-size: 13px;
   justify-content: space-between;
-  background: #929292 ;
+  background: #ececec;
   padding: 5px;
   border-radius: 15px;
   margin-bottom: 5px;
@@ -199,7 +201,7 @@ button.btn_delete svg {
 }
 
 .archivos_subidos a {
-  color: #ffffff;
+  color: #0e0d0d;
 }
 
 .archivos_subidos:hover {
@@ -216,7 +218,7 @@ button.btn_delete svg {
 }
 
 .beta {
-  background: #23da95;
+  background: #00ff6aea;
   font-size: 1.2rem;
   border-radius: 6px;
   display: inline-block;

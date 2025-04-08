@@ -1,29 +1,16 @@
-// Función para copiar enlace al portapapeles
-function copiarEnlace() {
-    const enlace = document.getElementById('enlaceTemporal').textContent;
-    navigator.clipboard.writeText(enlace)
-        .then(() => alert('Enlace copiado al portapapeles!'))
-        .catch(err => console.error('Error al copiar:', err));
-}
+var uploadsCompletados = 0;
+var totalSubidas = 0;
 
-// Variables para controlar subidas múltiples
-let uploadsCompletados = 0;
-let totalSubidas = 0;
-
-// Configurar evento de selección de archivos
 document.getElementById('archivo').addEventListener('change', function(e) {
-    const MAX_TAMANO = 50 * 1024 * 1024; // 50MB
+    const MAX_TAMANO = 50 * 1024 * 1024;
     const TIPOS_PERMITIDOS = ['pdf', 'doc', 'docx', 'xls', 'xlsx', 'ppt', 'pptx', 'jpg', 'jpeg', 'png'];
     const archivos = Array.from(e.target.files);
 
-    // Resetear contadores y UI
     uploadsCompletados = 0;
     totalSubidas = archivos.length;
     document.querySelector('.upload-status').style.display = 'block';
     document.getElementById('progressBar').style.width = '0%';
-    document.getElementById('statusMessage').textContent = '';
 
-    // Validar archivos
     const archivosInvalidos = archivos.filter(archivo => {
         const extension = archivo.name.split('.').pop().toLowerCase();
         return !TIPOS_PERMITIDOS.includes(extension) || archivo.size > MAX_TAMANO;
@@ -35,13 +22,11 @@ document.getElementById('archivo').addEventListener('change', function(e) {
         return;
     }
 
-    // Iniciar subida de todos los archivos
     archivos.forEach((archivo, indice) => {
         subirArchivo(archivo, indice + 1, archivos.length);
     });
 });
 
-// Función principal para subir archivos
 function subirArchivo(archivo, indiceActual, totalArchivos) {
     const formData = new FormData();
     formData.append('archivo', archivo);
@@ -50,7 +35,6 @@ function subirArchivo(archivo, indiceActual, totalArchivos) {
 
     const xhr = new XMLHttpRequest();
 
-    // Seguimiento del progreso
     xhr.upload.onprogress = (e) => {
         if (e.lengthComputable) {
             const porcentaje = Math.round((e.loaded / e.total) * 100);
@@ -58,22 +42,20 @@ function subirArchivo(archivo, indiceActual, totalArchivos) {
         }
     };
 
-    // Manejar respuesta
     xhr.onload = () => {
         uploadsCompletados++;
         
         if (xhr.status === 200) {
             try {
                 const respuesta = JSON.parse(xhr.responseText);
-                if (respuesta.exito) {
+                if (respuesta.success) { // <-- Usar 'success' aquí
                     agregarArchivoALista(archivo, respuesta.nombre);
                 }
             } catch (error) {
-                console.error('Error al procesar respuesta:', error);
+                console.error('Error:', error);
             }
         }
 
-        // Ocultar barra al finalizar todas las subidas
         if (uploadsCompletados === totalSubidas) {
             setTimeout(() => {
                 document.querySelector('.upload-status').style.display = 'none';
@@ -86,7 +68,6 @@ function subirArchivo(archivo, indiceActual, totalArchivos) {
     xhr.send(formData);
 }
 
-// Actualizar interfaz de progreso
 function actualizarUIProgreso(nombreArchivo, porcentaje, indiceActual, totalArchivos) {
     document.getElementById('progressBar').style.width = `${porcentaje}%`;
     document.getElementById('statusMessage').innerHTML = `
@@ -96,8 +77,13 @@ function actualizarUIProgreso(nombreArchivo, porcentaje, indiceActual, totalArch
     `;
 }
 
-// Agregar archivo a la lista visual
 function agregarArchivoALista(archivoOriginal, nombreServidor) {
+    const lista = document.getElementById('file-list');
+    // Eliminar mensaje de "No hay archivos" si existe
+    if (lista.querySelector('h3')) {
+        lista.innerHTML = '';
+    }
+
     const extension = archivoOriginal.name.split('.').pop().toLowerCase();
     const icono = obtenerIcono(extension);
     
@@ -122,10 +108,9 @@ function agregarArchivoALista(archivoOriginal, nombreServidor) {
         </div>
     `;
 
-    document.getElementById('file-list').prepend(nuevoElemento);
+    lista.prepend(nuevoElemento);
 }
 
-// Mapear extensiones a íconos FontAwesome
 function obtenerIcono(extension) {
     const iconos = {
         'pdf': 'fa-file-pdf',

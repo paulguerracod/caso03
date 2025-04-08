@@ -7,7 +7,7 @@ function generarCodigo() {
     do {
         $codigo = substr(str_shuffle($caracteres), 0, 3);
         $ruta = __DIR__ . "/private/descarga/$codigo";
-    } while (file_exists($ruta));
+    } while(file_exists($ruta));
     return $codigo;
 }
 
@@ -16,7 +16,7 @@ $codigo = isset($_GET['codigo']) && preg_match('/^[a-z0-9]{3}$/', $_GET['codigo'
     ? $_GET['codigo'] 
     : generarCodigo();
 
-// Redirigir para fijar código en URL
+// Redirigir para fijar código
 if (!isset($_GET['codigo'])) {
     header("Location: ?codigo=$codigo");
     exit;
@@ -27,7 +27,7 @@ if (empty($_SESSION['csrf_token'])) {
     $_SESSION['csrf_token'] = bin2hex(random_bytes(32));
 }
 
-// Procesar eliminación de archivos
+// Procesar eliminación de archivo
 if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['eliminarArchivo'])) {
     try {
         // Validar CSRF
@@ -35,38 +35,30 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['eliminarArchivo'])) {
             throw new Exception("Acceso no autorizado");
         }
 
-        // Validar y sanitizar entrada
+        // Sanitizar entrada
         $archivo = basename($_POST['eliminarArchivo']);
-        $codigo = $_POST['codigo'];
-        
-        // Construir rutas seguras
-        $directorioBase = realpath(__DIR__ . "/private/descarga/$codigo");
-        $rutaArchivo = realpath("$directorioBase/$archivo");
+        $rutaArchivo = realpath(__DIR__ . "/private/descarga/$codigo/" . $archivo);
 
-        // Verificar rutas válidas
-        if (!$rutaArchivo || strpos($rutaArchivo, $directorioBase) !== 0) {
-            throw new Exception("Ruta inválida");
+        // Validar ruta segura
+        if (strpos($rutaArchivo, realpath(__DIR__ . "/private/descarga/$codigo/")) !== 0) {
+            throw new Exception("Intento de acceso inválido");
         }
 
-        // Eliminar archivo
-        if (file_exists($rutaArchivo)) {
-            if (!unlink($rutaArchivo)) {
-                throw new Exception("Error al eliminar archivo");
-            }
-            // Redirigir para evitar reenvío de formulario
+        if (file_exists($rutaArchivo) && unlink($rutaArchivo)) {
             header("Location: ?codigo=$codigo");
             exit;
         }
+        
+        throw new Exception("Error al eliminar archivo");
+
     } catch (Exception $e) {
-        $error = $e->getMessage();
+        $mensajeError = htmlspecialchars($e->getMessage());
     }
 }
 
-// Obtener archivos existentes
-$directorio = realpath(__DIR__ . "/private/descarga/$codigo");
-$archivos = is_dir($directorio) 
-    ? array_diff(scandir($directorio), ['.', '..', '.htaccess']) 
-    : [];
+// Obtener archivos
+$carpeta = __DIR__ . "/private/descarga/$codigo";
+$archivos = is_dir($carpeta) ? array_diff(scandir($carpeta), ['.', '..', '.htaccess']) : [];
 ?>
 
 <!DOCTYPE html>
@@ -93,18 +85,13 @@ $archivos = is_dir($directorio)
             <!-- Contenedor principal flex -->
             <div class="main-grid">
                 <div class="drop-area" id="drop-area">
-                    <form action="" id="form" method="POST" enctype="multipart/form-data">
-                        <input type="hidden" name="csrf_token" value="<?= htmlspecialchars($_SESSION['csrf_token'], ENT_QUOTES) ?>">
-                        <input type="hidden" name="codigo" value="<?= htmlspecialchars($codigo) ?>">
+                    <form id="form" method="POST" enctype="multipart/form-data">
+                        <input type="hidden" name="csrf_token" value="<?= $_SESSION['csrf_token'] ?>">
+                        <input type="hidden" name="codigo" value="<?= $codigo ?>">
                         
                         <img src="https://cdn.pixabay.com/photo/2016/01/03/00/43/upload-1118929_1280.png" 
-                             id="img" 
-                             style="width: 70px; height: 70px;"><br>
-                        <input type="file" class="file-input" 
-                               name="archivo[]" 
-                               id="archivo" 
-                               multiple 
-                               onchange="document.getElementById('form').submit()">
+                             id="img" style="width: 70px; height: 70px;"><br>
+                        <input type="file" class="file-input" name="archivo[]" id="archivo" multiple>
                         <label> Click para seleccionar archivos<br>o</label>
                         <p><b>Abre el explorador</b></p>
                         
@@ -121,30 +108,29 @@ $archivos = is_dir($directorio)
                     <div id="file-list" class="pila">
                         <?php if (!empty($archivos)): ?>
                             <h3 style="margin-bottom:10px;">Archivos Subidos:</h3>
-                            <?php foreach ($archivos as $archivo): 
-                                $fileInfo = pathinfo($archivo);
+                            <?php foreach ($archivos as $file): 
+                                $fileInfo = pathinfo($file);
                                 $extension = $fileInfo['extension'] ?? 'desconocido';
                                 $iconClass = match(strtolower($extension)) {
                                     'pdf' => 'fa-file-pdf',
                                     'doc', 'docx' => 'fa-file-word',
                                     'xls', 'xlsx' => 'fa-file-excel',
                                     'ppt', 'pptx' => 'fa-file-powerpoint',
-                                    'txt' => 'fa-file-alt',
                                     default => 'fa-file'
                                 };
                             ?>
                                 <div class="archivos_subidos">
                                     <div class="file-info">
                                         <i class="far <?= $iconClass ?>"></i>
-                                        <a href="descargar.php?codigo=<?= $codigo ?>&file=<?= urlencode($archivo) ?>" download>
-                                            <?= htmlspecialchars($archivo, ENT_QUOTES) ?>
+                                        <a href="descargar.php?codigo=<?= $codigo ?>&file=<?= urlencode($file) ?>" download>
+                                            <?= htmlspecialchars($file) ?>
                                         </a>
                                     </div>
                                     <div>
                                         <form method="POST">
                                             <input type="hidden" name="csrf_token" value="<?= $_SESSION['csrf_token'] ?>">
                                             <input type="hidden" name="codigo" value="<?= $codigo ?>">
-                                            <input type="hidden" name="eliminarArchivo" value="<?= htmlspecialchars($archivo, ENT_QUOTES) ?>">
+                                            <input type="hidden" name="eliminarArchivo" value="<?= htmlspecialchars($file) ?>">
                                             <button type="submit" class="btn_delete">
                                                 <svg xmlns="http://www.w3.org/2000/svg" class="icon icon-tabler icon-tabler-trash" 
                                                      width="24" height="24" viewBox="0 0 24 24" 
@@ -157,7 +143,7 @@ $archivos = is_dir($directorio)
                                                     <path d="M5 7l1 12a2 2 0 0 0 2 2h8a2 2 0 0 0 2 -2l1 -12" />
                                                     <path d="M9 7v-3a1 1 0 0 1 1 -1h4a1 1 0 0 1 1 1v3" />
                                                 </svg>
-                                            </button>
+                                                </button>
                                         </form>
                                     </div>
                                 </div>
@@ -170,5 +156,6 @@ $archivos = is_dir($directorio)
             </div>
         </div>
     </div>
+    <script src="parametro.js"></script>
 </body>
 </html>

@@ -1,47 +1,84 @@
-// ----- inicio  -----
-const MAX_FILE_SIZE_MB = 500;
-const MAX_TOTAL_SIZE_MB = 500;
+// Función para copiar enlace al portapapeles
+function copiarEnlace() {
+    const enlace = document.getElementById('enlaceTemporal').textContent;
+    navigator.clipboard.writeText(enlace)
+        .then(() => alert('Enlace copiado al portapapeles!'))
+        .catch(err => console.error('Error al copiar:', err));
+}
 
-// Función uploadFile actualizada
-function uploadFile(file) {
+// Variables para controlar subidas múltiples
+let uploadsCompletados = 0;
+let totalSubidas = 0;
+
+// Configurar evento de selección de archivos
+document.getElementById('archivo').addEventListener('change', function(e) {
+    const MAX_TAMANO = 50 * 1024 * 1024; // 50MB
+    const TIPOS_PERMITIDOS = ['pdf', 'doc', 'docx', 'xls', 'xlsx', 'ppt', 'pptx', 'jpg', 'jpeg', 'png'];
+    const archivos = Array.from(e.target.files);
+
+    // Resetear contadores y UI
+    uploadsCompletados = 0;
+    totalSubidas = archivos.length;
+    document.querySelector('.upload-status').style.display = 'block';
+    document.getElementById('progressBar').style.width = '0%';
+    document.getElementById('statusMessage').textContent = '';
+
+    // Validar archivos
+    const archivosInvalidos = archivos.filter(archivo => {
+        const extension = archivo.name.split('.').pop().toLowerCase();
+        return !TIPOS_PERMITIDOS.includes(extension) || archivo.size > MAX_TAMANO;
+    });
+
+    if (archivosInvalidos.length > 0) {
+        alert('Archivos no válidos:\n' + archivosInvalidos.map(a => a.name).join('\n'));
+        e.target.value = '';
+        return;
+    }
+
+    // Iniciar subida de todos los archivos
+    archivos.forEach((archivo, indice) => {
+        subirArchivo(archivo, indice + 1, archivos.length);
+    });
+});
+
+// Función principal para subir archivos
+function subirArchivo(archivo, indiceActual, totalArchivos) {
     const formData = new FormData();
-    formData.append('archivo', file);
+    formData.append('archivo', archivo);
     formData.append('codigo', document.querySelector('[name="codigo"]').value);
     formData.append('csrf_token', document.querySelector('[name="csrf_token"]').value);
 
     const xhr = new XMLHttpRequest();
-    
-    xhr.upload.onprogress = function(e) {
+
+    // Seguimiento del progreso
+    xhr.upload.onprogress = (e) => {
         if (e.lengthComputable) {
-            const percent = (e.loaded / e.total) * 100;
-            document.getElementById('progressBar').style.width = `${percent}%`;
+            const porcentaje = Math.round((e.loaded / e.total) * 100);
+            actualizarUIProgreso(archivo.name, porcentaje, indiceActual, totalArchivos);
         }
     };
 
-    xhr.onload = function() {
-        if (this.status === 200) {
+    // Manejar respuesta
+    xhr.onload = () => {
+        uploadsCompletados++;
+        
+        if (xhr.status === 200) {
             try {
-                const response = JSON.parse(this.responseText);
-                if (response.success) {
-                    // Actualizar lista sin recargar
-                    const codigo = encodeURIComponent(document.querySelector('[name="codigo"]').value);
-                    const nombreArchivo = encodeURIComponent(response.nombre);
-                    
-                    const newFile = document.createElement('div');
-                    newFile.className = 'archivos_subidos';
-                    newFile.innerHTML = `
-                        <div>
-                            <a href="descargar.php?codigo=${codigo}&file=${nombreArchivo}" download>
-                                ${file.name}
-                            </a>
-                        </div>
-                        <!-- Botón eliminar -->
-                    `;
-                    document.getElementById('file-list').prepend(newFile);
+                const respuesta = JSON.parse(xhr.responseText);
+                if (respuesta.exito) {
+                    agregarArchivoALista(archivo, respuesta.nombre);
                 }
-            } catch (e) {
-                console.error('Error parsing response:', e);
+            } catch (error) {
+                console.error('Error al procesar respuesta:', error);
             }
+        }
+
+        // Ocultar barra al finalizar todas las subidas
+        if (uploadsCompletados === totalSubidas) {
+            setTimeout(() => {
+                document.querySelector('.upload-status').style.display = 'none';
+                document.getElementById('progressBar').style.width = '0%';
+            }, 2000);
         }
     };
 
@@ -49,51 +86,58 @@ function uploadFile(file) {
     xhr.send(formData);
 }
 
-// Función para manejar errores
-function handleUploadError(message, file) {
-    const progressBar = document.getElementById('progressBar');
-    const statusMessage = document.getElementById('statusMessage');
-    
-    progressBar.classList.add('error');
-    progressBar.style.width = '100%';
-    statusMessage.innerHTML = `
-        <span style="color:#e74c3c">✗ Error en ${file.name}:</span>
-        <br>${message}
+// Actualizar interfaz de progreso
+function actualizarUIProgreso(nombreArchivo, porcentaje, indiceActual, totalArchivos) {
+    document.getElementById('progressBar').style.width = `${porcentaje}%`;
+    document.getElementById('statusMessage').innerHTML = `
+        <strong>Subiendo:</strong> ${nombreArchivo}<br>
+        <strong>Progreso:</strong> ${porcentaje}%<br>
+        Archivo ${indiceActual} de ${totalArchivos}
     `;
-    
-    setTimeout(() => {
-        document.querySelector('.progress-container').classList.remove('active');
-    }, 5000);
 }
 
-// ----- Modificar el evento 'change' del input -----
-document.getElementById('archivo').addEventListener('change', function(e) {
-    const files = e.target.files;
-    const uploadStatus = document.querySelector('.upload-status');
-    const statusMessage = document.getElementById('statusMessage');
+// Agregar archivo a la lista visual
+function agregarArchivoALista(archivoOriginal, nombreServidor) {
+    const extension = archivoOriginal.name.split('.').pop().toLowerCase();
+    const icono = obtenerIcono(extension);
     
-    // Validación de tamaño
-    let totalSize = 0;
-    Array.from(files).forEach(file => {
-        if(file.size > MAX_FILE_SIZE_MB * 1024 * 1024) {
-            showUploadError(`Archivo demasiado grande: ${file.name} (Máximo ${MAX_FILE_SIZE_MB}MB)`);
-            e.target.value = '';
-            return;
-        }
-        totalSize += file.size;
-    });
+    const nuevoElemento = document.createElement('div');
+    nuevoElemento.className = 'archivos_subidos';
+    nuevoElemento.innerHTML = `
+        <div class="file-info">
+            <i class="far ${icono}"></i>
+            <a href="descargar.php?codigo=${encodeURIComponent(document.querySelector('[name="codigo"]').value)}&file=${encodeURIComponent(nombreServidor)}" download>
+                ${archivoOriginal.name}
+            </a>
+        </div>
+        <div>
+            <form method="POST">
+                <input type="hidden" name="csrf_token" value="${document.querySelector('[name="csrf_token"]').value}">
+                <input type="hidden" name="codigo" value="${document.querySelector('[name="codigo"]').value}">
+                <input type="hidden" name="eliminarArchivo" value="${nombreServidor}">
+                <button type="submit" class="btn_delete">
+                    <i class="fas fa-trash-alt"></i>
+                </button>
+            </form>
+        </div>
+    `;
 
-    if(totalSize > MAX_TOTAL_SIZE_MB * 1024 * 1024) {
-        showUploadError(`Tamaño total excede ${MAX_TOTAL_SIZE_MB}MB`);
-        e.target.value = '';
-        return;
-    }
+    document.getElementById('file-list').prepend(nuevoElemento);
+}
 
-    // Si pasa validaciones
-    if(files.length > 0) {
-        uploadStatus.classList.add('active');
-        Array.from(files).forEach((file, index) => {
-            uploadFile(file, index + 1, files.length);
-        });
-    }
-});
+// Mapear extensiones a íconos FontAwesome
+function obtenerIcono(extension) {
+    const iconos = {
+        'pdf': 'fa-file-pdf',
+        'doc': 'fa-file-word',
+        'docx': 'fa-file-word',
+        'xls': 'fa-file-excel',
+        'xlsx': 'fa-file-excel',
+        'ppt': 'fa-file-powerpoint',
+        'pptx': 'fa-file-powerpoint',
+        'jpg': 'fa-file-image',
+        'jpeg': 'fa-file-image',
+        'png': 'fa-file-image'
+    };
+    return iconos[extension] || 'fa-file';
+}

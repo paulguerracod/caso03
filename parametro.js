@@ -2,61 +2,47 @@
 const MAX_FILE_SIZE_MB = 500;
 const MAX_TOTAL_SIZE_MB = 500;
 
-// Función mejorada para subir archivos
+// Función uploadFile actualizada
 function uploadFile(file) {
-    const progressBar = document.getElementById('progressBar');
-    const progressContainer = document.querySelector('.progress-container');
-    const statusMessage = document.getElementById('statusMessage');
-    
-    // Resetear estado
-    progressBar.style.width = '0%';
-    progressBar.classList.remove('error');
-    progressContainer.classList.add('active');
-    statusMessage.textContent = 'Preparando subida...';
-
     const formData = new FormData();
     formData.append('archivo', file);
-    formData.append('carpeta', carpetaNombre);
+    formData.append('codigo', document.querySelector('[name="codigo"]').value);
+    formData.append('csrf_token', document.querySelector('[name="csrf_token"]').value);
 
     const xhr = new XMLHttpRequest();
     
-    // Seguimiento del progreso
-    xhr.upload.addEventListener('progress', function(e) {
+    xhr.upload.onprogress = function(e) {
         if (e.lengthComputable) {
             const percent = (e.loaded / e.total) * 100;
-            progressBar.style.width = percent + '%';
-            progressBar.classList.add('uploading');
-            statusMessage.textContent = `Subiendo: ${Math.round(percent)}% (${formatFileSize(e.loaded)} de ${formatFileSize(e.total)})`;
-        }
-    });
-
-    xhr.onload = function() {
-        progressBar.classList.remove('uploading');
-        
-        if (xhr.status === 200) {
-            try {
-                const response = JSON.parse(xhr.responseText);
-                if (response.success) {
-                    progressBar.style.width = '100%';
-                    statusMessage.innerHTML = `
-                        <span style="color:#2ecc71">✓ Subido exitosamente!</span>
-                        <br>${file.name} (${formatFileSize(file.size)})
-                    `;
-                    setTimeout(() => {
-                        progressContainer.classList.remove('active');
-                        fetchUploadedFiles();
-                    }, 2000);
-                }
-            } catch (e) {
-                handleUploadError('Error al procesar la respuesta', file);
-            }
-        } else {
-            handleUploadError(`Error ${xhr.status}: ${xhr.statusText}`, file);
+            document.getElementById('progressBar').style.width = `${percent}%`;
         }
     };
 
-    xhr.onerror = function() {
-        handleUploadError('Error de conexión', file);
+    xhr.onload = function() {
+        if (this.status === 200) {
+            try {
+                const response = JSON.parse(this.responseText);
+                if (response.success) {
+                    // Actualizar lista sin recargar
+                    const codigo = encodeURIComponent(document.querySelector('[name="codigo"]').value);
+                    const nombreArchivo = encodeURIComponent(response.nombre);
+                    
+                    const newFile = document.createElement('div');
+                    newFile.className = 'archivos_subidos';
+                    newFile.innerHTML = `
+                        <div>
+                            <a href="descargar.php?codigo=${codigo}&file=${nombreArchivo}" download>
+                                ${file.name}
+                            </a>
+                        </div>
+                        <!-- Botón eliminar -->
+                    `;
+                    document.getElementById('file-list').prepend(newFile);
+                }
+            } catch (e) {
+                console.error('Error parsing response:', e);
+            }
+        }
     };
 
     xhr.open('POST', 'subir.php', true);

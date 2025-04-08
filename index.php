@@ -64,6 +64,17 @@ try {
 } catch (Exception $e) {
     $mensaje = "Error: " . htmlspecialchars($e->getMessage());
 }
+
+// Definir ruta de forma segura
+$codigo = htmlspecialchars($codigo, ENT_QUOTES, 'UTF-8');
+$carpetaRuta = __DIR__ . "/private/descarga/" . $codigo;
+
+// Verificar y listar archivos
+if (is_dir($carpetaRuta)) {
+    $files = array_diff(scandir($carpetaRuta), ['.', '..', '.htaccess']);
+} else {
+    $files = [];
+}
 ?>
 
 <!DOCTYPE html>
@@ -115,17 +126,11 @@ try {
                 <!-- Sección de archivos -->
                 <div class="container2">
                     <div id="file-list" class="pila">
-                        <?php
-                        $targetDir = $carpetaRuta;
-                        $files = scandir($targetDir);
-                        $files = array_diff($files, array('.', '..'));
-
-                        if (count($files) > 0) {
-                            echo "<h3 style='margin-bottom:20px;'>Archivos Subidos:</h3>";
-                            
-                            foreach ($files as $file) {
-                                $fileSafe = htmlspecialchars($file);
-                                $extension = pathinfo($file, PATHINFO_EXTENSION);
+                    <?php if (!empty($files)): ?>
+                        <h3 style="margin-bottom:10px;">Archivos Subidos:</h3>
+                            <?php foreach ($files as $file): 
+                            $fileSafe = htmlspecialchars($file, ENT_QUOTES);
+                            $fileUrl = "descargar.php?codigo=$codigo&file=" . urlencode($file);
                                 
                                 // Determinar el icono según la extensión
                                 $iconClass = match(strtolower($extension)) {
@@ -136,19 +141,18 @@ try {
                                     'txt' => 'fa-file-alt',
                                     default => 'fa-file'
                                 };
-                                
-                                echo <<<HTML
-                                <div class='archivos_subidos'>
-                                    <div class="file-info">
-                                        <i class="far $iconClass icon-file"></i>
-                                        <a href="$carpetaRuta/$fileSafe" download class='boton-descargar'>
-                                            $fileSafe
+                                ?>
+                                <div class="archivos_subidos">
+                                    <div>
+                                        <a href="<?= $fileUrl ?>" download class="boton-descargar">
+                                            <?= $fileSafe ?>
                                         </a>
                                     </div>
                                     <div>
-                                        <form action='' method='POST' style='display:inline;'>
-                                            <input type='hidden' name='eliminarArchivo' value='$fileSafe'>
-                                            <button type='submit' class='btn_delete'>
+                        <form method="POST">
+                            <input type="hidden" name="csrf_token" value="<?= $_SESSION['csrf_token'] ?>">
+                            <input type="hidden" name="eliminarArchivo" value="<?= $fileSafe ?>">
+                            <button type="submit" class="btn_delete">
                                                 <svg xmlns='http://www.w3.org/2000/svg' class='icon icon-tabler icon-tabler-trash' 
                                                      width='24' height='24' viewBox='0 0 24 24' 
                                                      stroke-width='2' stroke='currentColor' fill='none' 
@@ -160,16 +164,14 @@ try {
                                                     <path d='M5 7l1 12a2 2 0 0 0 2 2h8a2 2 0 0 0 2 -2l1 -12' />
                                                     <path d='M9 7v-3a1 1 0 0 1 1 -1h4a1 1 0 0 1 1 1v3' />
                                                 </svg>
-                                            </button>
-                                        </form>
-                                    </div>
-                                </div>
-                                HTML;
-                            }
-                        } else {
-                            echo "<br><h3 style='margin-bottom:10px;'>No hay archivos subidos:</h3></br>";
-                        }
-                        ?>
+                                                </button>
+                                            </form>
+                                         </div>
+                                        </div>
+                                        <?php endforeach; ?>
+                                        <?php else: ?>
+                                            <h3 style="margin-bottom:10px;">No hay archivos subidos</h3>
+                                            <?php endif; ?>
                     </div>
                 </div>
             </div>

@@ -217,6 +217,12 @@ button.btn_delete svg {
  
 }
 
+.estado {
+  color: #f39c12;
+  font-size: 0.9em;
+  margin-left: 10px;
+}
+
 .beta {
   background: #00ff6aea;
   font-size: 1.2rem;
